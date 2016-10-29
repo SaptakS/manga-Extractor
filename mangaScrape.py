@@ -9,28 +9,19 @@ from StringIO import StringIO
 from requests.exceptions import ConnectionError
 
 
-proxy = "http://<username>:<password>@<host>:<port>"
-proxyDict = {
-              "http": proxy,
-              "https": proxy,
-              "ftp": proxy
-            }
+PROXY = "http://<username>:<password>@<host>:<port>"
+PROXY_DICT = {
+				"http": PROXY,
+				"https": PROXY,
+				"ftp": PROXY
+			 }
 
-proxy_support = urllib2.ProxyHandler(proxyDict)
-opener = urllib2.build_opener(proxy_support)
-urllib2.install_opener(opener)
-hdr = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11',
-       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-       'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
-       'Accept-Encoding': 'none',
-       'Accept-Language': 'en-US,en;q=0.8',
-       'Connection': 'keep-alive'}
-
+PROXY_SUPPORT = urllib2.ProxyHandler(PROXY_DICT)
+OPENER = urllib2.build_opener(PROXY_SUPPORT)
+urllib2.install_opener(OPENER)
 
 def findNextURL(imageUrl):
-
     return imageUrl.parent["href"]
-
 
 def saveImg(data):
     maxval = 0
@@ -40,7 +31,8 @@ def saveImg(data):
     if len(check_link.split('.')) > 2:
         check_link = check_link.split('.')[1] + "." + check_link.split('.')[2]
     for link in imglinks:
-        if check_link in str(link['src']) and sm(None, str(link['src']), BASE_URL.replace("http", "")).ratio() > maxval:
+        if check_link in str(link['src']) and sm(None, str(link['src']), \
+        	BASE_URL.replace("http", "")).ratio() > maxval:
             maxval = sm(None, str(link['src']), BASE_URL).ratio()
             maxl = link
             maxurl = link['src']
@@ -55,30 +47,26 @@ def saveImg(data):
         maxurl = BASE_HOST.split("//")[0] + maxurl
 
     try:
-        image = requests.get(maxurl, proxies=proxyDict)
+        image = requests.get(maxurl, proxies=PROXY_DICT)
         print "Images Saved Successfully"
     except:
-        print "Error        "
+        print "Error"
         exit(0)
 
-    file = open(os.path.join(BASE_PATH, "%s.jpg") % IMAGE_TITLE, 'wb')
+    image_file = open(os.path.join(BASE_PATH, "%s.jpg") % IMAGE_TITLE, 'wb')
     try:
-        Image.open(StringIO(image.content)).save(file, 'JPEG')
+        Image.open(StringIO(image.content)).save(image_file, 'JPEG')
     except IOError, e:
         print "Couldnt Save:", e
-
     finally:
-        file.close()
+        image_file.close()
 
     return maxl
 
 
 def linkData(url):
     try:
-        #req = urllib2.Request(BASE_URL, headers=hdr)
-        #resp = urllib2.urlopen(req).read()
-        r = requests.get(BASE_URL, proxies=proxyDict)
-
+        r = requests.get(BASE_URL, proxies=PROXY_DICT)
         data = bs("".join(r.text))
 
         return data
@@ -97,20 +85,19 @@ IMAGE_TITLE = 0
 if not os.path.exists(BASE_PATH):
     os.makedirs(BASE_PATH)
 
-imageUrl = saveImg(linkData(BASE_URL))
-#print imageUrl.parent['href']
+IMAGEURL = saveImg(linkData(BASE_URL))
 
-ctr = 0
-while ctr < TOTAL_IMG - 1:
+CTR = 0
+while CTR < TOTAL_IMG - 1:
     IMAGE_TITLE = IMAGE_TITLE + 1
-    next_rel = findNextURL(imageUrl)
-    #print next_rel
-    if not "://" in next_rel:
-        if next_rel.startswith("/"):
-            BASE_URL = BASE_HOST + next_rel
+    NEXT_REL = findNextURL(IMAGEURL)
+    if not "://" in NEXT_REL:
+        if NEXT_REL.startswith("/"):
+            BASE_URL = BASE_HOST + NEXT_REL
         else:
-            BASE_URL = re.sub(r"\w+.html", next_rel, BASE_URL)
-    print "Next page is", BASE_URL
-    imageUrl = saveImg(linkData(BASE_URL))
-    ctr = ctr + 1
-print "Total Pages Downloaded: ", (ctr + 1)
+            BASE_URL = re.sub(r"\w+.html", NEXT_REL, BASE_URL)
+    print "Next page is :", BASE_URL
+    IMAGEURL = saveImg(linkData(BASE_URL))
+    CTR = CTR + 1
+
+print "Total Pages Downloaded: ", (CTR + 1)
