@@ -9,14 +9,14 @@ from StringIO import StringIO
 from requests.exceptions import ConnectionError
 
 
-proxy = "http://<username>:<password>@<host>:<port>"
-proxyDict = {
-              "http": proxy,
-              "https": proxy,
-              "ftp": proxy
+PROXY = "http://<username>:<password>@<host>:<port>"
+PROXY_DICT = {
+              "http": PROXY,
+              "https": PROXY,
+              "ftp": PROXY
             }
 
-proxy_support = urllib2.ProxyHandler(proxyDict)
+proxy_support = urllib2.ProxyHandler(PROXY_DICT)
 opener = urllib2.build_opener(proxy_support)
 urllib2.install_opener(opener)
 hdr = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11',
@@ -28,7 +28,6 @@ hdr = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML,
 
 
 def findNextURL(imageUrl):
-
     return imageUrl.parent["href"]
 
 
@@ -55,10 +54,10 @@ def saveImg(data):
         maxurl = BASE_HOST.split("//")[0] + maxurl
 
     try:
-        image = requests.get(maxurl, proxies=proxyDict)
+        image = requests.get(maxurl, proxies=PROXY_DICT)
         print "Images Saved Successfully"
     except:
-        print "Error        "
+        print "Error"
         exit(0)
 
     file = open(os.path.join(BASE_PATH, "%s.jpg") % IMAGE_TITLE, 'wb')
@@ -75,10 +74,7 @@ def saveImg(data):
 
 def linkData(url):
     try:
-        #req = urllib2.Request(BASE_URL, headers=hdr)
-        #resp = urllib2.urlopen(req).read()
-        r = requests.get(BASE_URL, proxies=proxyDict)
-
+        r = requests.get(BASE_URL, proxies=PROXY_DICT)
         data = bs("".join(r.text))
 
         return data
@@ -90,7 +86,7 @@ BASE_PATH = raw_input("Enter Name of the Folder to save in:")
 BASE_URL = raw_input("Enter the First Page URL:")
 BASE_HOST = re.split(r"/", BASE_URL)[0] + "//" + re.split(r"/", BASE_URL)[2]
 BASE_CHECK_LINK = BASE_URL
-#print BASE_HOST
+
 TOTAL_IMG = int(raw_input("Enter total images to download:"))
 IMAGE_TITLE = 0
 
@@ -98,13 +94,11 @@ if not os.path.exists(BASE_PATH):
     os.makedirs(BASE_PATH)
 
 imageUrl = saveImg(linkData(BASE_URL))
-#print imageUrl.parent['href']
 
 ctr = 0
 while ctr < TOTAL_IMG - 1:
     IMAGE_TITLE = IMAGE_TITLE + 1
     next_rel = findNextURL(imageUrl)
-    #print next_rel
     if not "://" in next_rel:
         if next_rel.startswith("/"):
             BASE_URL = BASE_HOST + next_rel
@@ -113,4 +107,5 @@ while ctr < TOTAL_IMG - 1:
     print "Next page is", BASE_URL
     imageUrl = saveImg(linkData(BASE_URL))
     ctr = ctr + 1
+    
 print "Total Pages Downloaded: ", (ctr + 1)
