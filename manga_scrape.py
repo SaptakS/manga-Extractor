@@ -1,4 +1,5 @@
 import os
+import sys
 import requests
 import re
 
@@ -67,7 +68,11 @@ def saveImg(data, base_host, base_url, base_path, image_title):
     except:
         print ("Error")
         exit(0)
+    saveImageToFile(base_path, image_title, image)
+    return maxl
 
+
+def saveImageToFile(base_path, image_title, image):
     file = open(os.path.join(base_path, "%s.jpg") % image_title, 'wb')
     try:
         Image.open(BytesIO(image.content)).save(file, 'JPEG')
@@ -76,8 +81,6 @@ def saveImg(data, base_host, base_url, base_path, image_title):
 
     finally:
         file.close()
-
-    return maxl
 
 
 def linkData(base_url):
@@ -95,6 +98,22 @@ def linkData(base_url):
         print("Link read error")
 
 
+def trySaveLinkAsImage(base_url, base_path, image_title):
+    try:
+        # uncomment if proxy settings
+        # r = requests.get(base_url, proxies=proxyDict)
+
+        # comment if proxy settings
+        r = requests.get(base_url)
+        if r.headers['content-type'].startswith('image'):
+            saveImageToFile(base_path, image_title, image=r)
+            return True
+    except (ConnectionError, KeyError):
+        pass
+    return False
+
+
+
 def main(base_url, base_path, total_img):
     base_host = re.split(r"/", base_url)[0] + "//" + re.split(r"/", base_url)[2]
 
@@ -102,6 +121,12 @@ def main(base_url, base_path, total_img):
 
     if not os.path.exists(base_path):
         os.makedirs(base_path)
+
+    if trySaveLinkAsImage(base_url, base_path, image_title):
+        print("Detected that url is an image")
+        print("Total Pages Downloaded: ", 1)
+        sys.exit(0)
+
 
     imageUrl = saveImg(linkData(base_url), base_host,
                        base_url, base_path, image_title)
@@ -124,7 +149,7 @@ def main(base_url, base_path, total_img):
         ctr = ctr + 1
     print("Total Pages Downloaded: ", (ctr + 1))
 
-BASE_PATH = input("Enter Name of the Folder to save in:")
-BASE_URL = input("Enter the First Page URL:")
-TOTAL_IMG = int(input("Enter total images to download:"))
+BASE_PATH = input("Enter Name of the Folder to save in: ").strip()
+BASE_URL = input("Enter the First Page URL: ").strip()
+TOTAL_IMG = int(input("Enter total images to download: ").strip())
 main(BASE_URL, BASE_PATH, TOTAL_IMG)
